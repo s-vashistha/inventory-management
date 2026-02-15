@@ -1,0 +1,25 @@
+/* Tailwind v4 entry */
+@import "tailwindcss";
+
+/* ---------- Global Design Tokens ---------- */
+
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.6);
+}
+
+/* Dark mode variables (since you use darkMode: 'class') */
+.dark {
+  --glass-bg: rgba(17, 24, 39, 0.6);
+}
+
+/* ---------- Base Global Styles (optional) ---------- */
+
+html, body, #root {
+  height: 100%;
+}
+
+/* Example reusable class (ONLY if really needed) */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+}
