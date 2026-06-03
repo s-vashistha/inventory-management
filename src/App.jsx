@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { HashRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import Inventory from "./pages/Inventory.jsx";
 import Suppliers from "./pages/Suppliers";
