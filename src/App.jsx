@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { HashRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import Inventory from "./pages/Inventory.jsx";
@@ -8,15 +8,44 @@ import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Sidebar from "./components/Sidebar";
 import Navbar from "./components/Navbar";
+import { loadItems, loadUser, saveItems, saveUser } from "./lib/storage";
 
 export default function App() {
-  // global state (in a real app you'd use context / redux)
   const [dark, setDark] = useState(false);
   const [user, setUser] = useState(null); // { name, role: 'admin'|'staff' }
-  const [items, setItems] = useState(initialDemoItems());
+  const [items, setItems] = useState([]);
 
-  const lowStockCount = items.filter(i => Number(i.quantity) < 5).length;
+  useEffect(() => {
+    const persistedUser = loadUser();
+    const persistedItems = loadItems();
 
+    setUser(persistedUser);
+    if (persistedItems?.length) {
+      setItems(persistedItems);
+    } else {
+      const demo = initialDemoItems();
+      setItems(demo);
+      saveItems(demo);
+    }
+
+    // Optional: preserve theme in localStorage (client-friendly)
+    try {
+      const t = localStorage.getItem("ims:theme");
+      if (t === "dark") setDark(true);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    if (items) saveItems(items);
+  }, [items]);
+
+  useEffect(() => {
+    saveUser(user);
+  }, [user]);
+
+  const lowStockCount = items.filter((i) => Number(i.quantity) < 5).length;
   const auth = useMemo(() => ({ user, setUser }), [user]);
 
   return (
@@ -27,13 +56,25 @@ export default function App() {
             <div className="flex">
               <Sidebar lowStockCount={lowStockCount} user={user} />
               <div className="flex-1 min-h-screen flex flex-col">
-                <Navbar toggleDark={() => setDark(d => !d)} user={user} onLogout={() => setUser(null)} />
+                <Navbar
+                  toggleDark={() => {
+                    setDark((d) => {
+                      const next = !d;
+                      try {
+                        localStorage.setItem("ims:theme", next ? "dark" : "light");
+                      } catch {
+                        // ignore
+                      }
+                      return next;
+                    });
+                  }}
+                  user={user}
+                  onLogout={() => setUser(null)}
+                />
                 <main className="p-6">
                   <Routes>
                     <Route path="/" element={<Dashboard items={items} />} />
-                    <Route path="/inventory" element={
-                      <Inventory items={items} setItems={setItems} user={user} />
-                    } />
+                    <Route path="/inventory" element={<Inventory items={items} setItems={setItems} user={user} />} />
                     <Route path="/suppliers" element={<Suppliers />} />
                     <Route path="/reports" element={<Reports items={items} />} />
                     <Route path="*" element={<NotFound />} />
@@ -43,7 +84,7 @@ export default function App() {
             </div>
           ) : (
             <Routes>
-              <Route path="/login" element={<Login onLogin={(u)=>setUser(u)} />} />
+              <Route path="/login" element={<Login onLogin={(u) => setUser(u)} />} />
               <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
           )}
@@ -62,3 +103,4 @@ function initialDemoItems() {
     { id: 5, name: "Notebook A4", quantity: 50, price: 2.5, category: "Stationery" },
   ];
 }
+
